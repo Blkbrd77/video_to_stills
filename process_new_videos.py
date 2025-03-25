@@ -20,12 +20,29 @@ def load_processed_videos(bucket_name):
         with open(METADATA_LOCAL, 'r') as f:
             processed = json.load(f)
         print(f"Loaded processed videos from s3://{bucket_name}/{METADATA_KEY}")
+        print(f"Processed keys: {list(processed.keys())}")
     except s3_client.exceptions.ClientError as e:
         if e.response['Error']['Code'] == '404':
             print(f"No metadata file found at s3://{bucket_name}/{METADATA_KEY}, starting fresh.")
         else:
-            raise  # Re-raise other errors (e.g., permission issues)
+            raise
     return processed
+
+def get_new_videos(bucket_name, prefix="", processed_videos=None):
+    """List videos in S3 that haven't been processed yet."""
+    if processed_videos is None:
+        processed_videos = {}
+    
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    all_videos = {obj['Key']: obj['LastModified'] for obj in response.get('Contents', []) 
+                  if obj['Key'].endswith(('.mp4', '.mov', '.avi'))}
+    print(f"All videos found in s3://{bucket_name}/{prefix}: {list(all_videos.keys())}")
+    
+    new_videos = {key: last_modified for key, last_modified in all_videos.items() 
+                  if key not in processed_videos}
+    print(f"Processed videos from JSON: {list(processed_videos.keys())}")
+    print(f"New videos to process: {list(new_videos.keys())}")
+    return new_videos
 
 def save_processed_videos(bucket_name, processed):
     """Save the updated list of processed videos to S3."""
@@ -75,10 +92,13 @@ def get_new_videos(bucket_name, prefix="", processed_videos=None):
     
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
     all_videos = {obj['Key']: obj['LastModified'] for obj in response.get('Contents', []) 
-                  if obj['Key'].endswith(('.mp4', '.mov', '.avi'))}  # Add more video extensions as needed
+                  if obj['Key'].endswith(('.mp4', '.mov', '.avi'))}
+    print(f"All videos found in s3://{bucket_name}/{prefix}: {list(all_videos.keys())}")
     
     new_videos = {key: last_modified for key, last_modified in all_videos.items() 
                   if key not in processed_videos}
+    print(f"Processed videos from JSON: {list(processed_videos.keys())}")
+    print(f"New videos to process: {list(new_videos.keys())}")
     return new_videos
 
 def main():
