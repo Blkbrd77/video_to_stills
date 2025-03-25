@@ -9,7 +9,7 @@ from datetime import datetime
 s3_client = boto3.client('s3')
 
 # Metadata file to track processed videos (stored in S3)
-METADATA_KEY = "processed_videos.json"
+METADATA_KEY = "metadata/processed_videos.json"
 METADATA_LOCAL = "processed_videos.json"
 
 def load_processed_videos(bucket_name):
@@ -19,8 +19,12 @@ def load_processed_videos(bucket_name):
         s3_client.download_file(bucket_name, METADATA_KEY, METADATA_LOCAL)
         with open(METADATA_LOCAL, 'r') as f:
             processed = json.load(f)
-    except s3_client.exceptions.NoSuchKey:
-        print("No metadata file found, starting fresh.")
+        print(f"Loaded processed videos from s3://{bucket_name}/{METADATA_KEY}")
+    except s3_client.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            print(f"No metadata file found at s3://{bucket_name}/{METADATA_KEY}, starting fresh.")
+        else:
+            raise  # Re-raise other errors (e.g., permission issues)
     return processed
 
 def save_processed_videos(bucket_name, processed):

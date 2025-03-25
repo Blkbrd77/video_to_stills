@@ -1,0 +1,10 @@
+{
+    "name": "Video to Stills",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
+    "postCreateCommand": "sudo apt update && sudo apt install -y ffmpeg",
+    "customizations": {
+      "codespaces": {
+        "repositories": []
+      }
+    }
+  }
