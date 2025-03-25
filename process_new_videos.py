@@ -79,7 +79,7 @@ def get_new_videos(bucket_name, prefix="", processed_videos=None):
 
 def main():
     # Configuration
-    bucket_name = "your-s3-bucket-name"
+    bucket_name = "2samples-static-assets-211125453069"
     video_prefix = "videos/"  # S3 prefix where videos are stored
     frame_rate = 1
 
